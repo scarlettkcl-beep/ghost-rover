@@ -35,6 +35,7 @@ assert.equal(nodes.get("toastIco").dataset.icon, "tool"); assert.equal(ctx.toast
 ctx.toast("Unknown icon", "Title", "<script>");
 assert.equal(nodes.get("toastIco").dataset.icon, "star", "unknown toast icons use a safe emblem");
 const html = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
-for (const match of html.matchAll(/data-icon="([^"]+)"/g)) assert.ok(ctx.icons.names.includes(match[1]), "known icon " + match[1]);
+const phoneHtml = fs.readFileSync(path.join(__dirname, '../phone.html'), 'utf8');
+for (const match of (html + phoneHtml).matchAll(/data-icon="([^"]+)"/g)) assert.ok(ctx.icons.names.includes(match[1]), "known icon " + match[1]);
 assert.doesNotMatch(html, /reduced-motion|prefers-reduced-motion/);
 console.log("Mission icons, sound state labels, and remaining menu icon checks passed");

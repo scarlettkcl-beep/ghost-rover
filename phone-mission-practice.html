@@ -1,0 +1,46 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Ghost Rovers · Phone mission practice</title>
+<style>@font-face{font-family:Fredoka;src:url(lib/fredoka-latin-500-normal.woff2)}@font-face{font-family:Fredoka;src:url(lib/fredoka-latin-700-normal.woff2);font-weight:700}*{box-sizing:border-box}body{margin:0;background:#141a3c;color:#fff;font:500 16px Fredoka,system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:26px}h1{color:#59d8ff;margin:0 0 8px}p{color:#c0cdeb;line-height:1.4}#choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(225px,1fr));gap:12px}button{font:inherit;text-align:left;background:#263a66;color:#fff;border:2px solid #546fa4;border-radius:16px;padding:16px;cursor:pointer;min-height:90px}button strong{display:block;color:#ffe088;font-size:18px;margin-bottom:7px}button small{color:#cadbf5;line-height:1.35}button:focus-visible{outline:3px solid #59d8ff;outline-offset:3px}a{color:#59d8ff}#result{min-height:24px;color:#8ff3b2}
+body{background:radial-gradient(ellipse at 80% 0,#2b4565,transparent 65%),#111c31;min-height:100vh}
+main{padding:32px max(24px,env(safe-area-inset-left)) 40px;max-width:1060px}
+h1{color:#fff0bc;letter-spacing:-1px;font-size:36px;text-shadow:0 3px 0 #071426}
+main>p{max-width:640px;color:#b6cce3;font-size:14px}main>a,main a{color:#86deef;text-underline-offset:4px}
+#choices{counter-reset:missions;gap:15px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+#choices button{position:relative;counter-increment:missions;min-height:155px;padding:43px 20px 18px;background:linear-gradient(135deg,#2b4563,#203550);border:1px solid #6289a45e;border-bottom:3px solid #0a162c;border-radius:21px;box-shadow:inset 0 1px 0 #c2f1ff15,0 6px 16px #07142630;transition:transform .12s,background .12s}
+#choices button::before{content:counter(missions,decimal-leading-zero);position:absolute;top:15px;left:20px;color:#83d9e9;font-size:11px;letter-spacing:2px}
+#choices button::after{content:'↗';position:absolute;top:12px;right:18px;color:#7fa8c8;font-size:20px}
+#choices button strong{color:#fff0bf;font-size:21px;line-height:1.1;margin-bottom:10px}
+#choices button small{color:#bed0e4;font-size:12px;line-height:1.4;display:block}
+#choices button:active{transform:translateY(3px);background:#345476}
+#result:empty{display:none}#result{padding:12px 16px;border:1px solid #7adeaa55;border-radius:13px;background:#64e29610}
+@media(max-width:650px){main{padding:24px 20px}h1{font-size:30px}#choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#choices button{padding:39px 15px 16px}#choices button::before{left:15px}#choices button strong{font-size:18px}}
+@media(max-width:440px){#choices{grid-template-columns:1fr}}
+</style></head><body><main id="practiceMenu"><h1>Mission practice</h1><p>All 14 missions, running on this phone. Turn sideways and choose a task. Practice does not change your discoveries or award stickers.</p><p><a href="phone.html">Back to phone controller</a></p><p id="result" role="status"></p><div id="choices"></div></main><div id="hostView"></div>
+<script src="js/icons.js"></script><script src="js/tilt-steering.js"></script><script src="js/phone-link.js"></script>
+<script src="js/minigames/core.js"></script>
+<script src="js/minigames/apollo11-land-eagle.js"></script>
+<script src="js/minigames/apollo17-fix-fender.js"></script>
+<script src="js/minigames/spirit-broken-wheel.js"></script>
+<script src="js/minigames/ingenuity-first-flight.js"></script>
+<script src="js/minigames/surveyor3-soft-landing.js"></script>
+<script src="js/minigames/apollo14-laser-mirror.js"></script>
+<script src="js/minigames/apollo15-unfold-rover.js"></script>
+<script src="js/minigames/apollo16-grand-prix.js"></script>
+<script src="js/minigames/viking1-feed-lab.js"></script>
+<script src="js/minigames/viking2-focus-camera.js"></script>
+<script src="js/minigames/sojourner-roll-out.js"></script>
+<script src="js/minigames/opportunity-catch-wind.js"></script>
+<script src="js/minigames/phoenix-dig-ice.js"></script>
+<script src="js/minigames/insight-seismometer.js"></script>
+<script src="js/phone-task-controls.js"></script><script src="js/phone-missions.js"></script>
+<script>
+(() => {
+ const menu=document.getElementById('practiceMenu'),result=document.getElementById('result');let selected='';
+ const runtime=PhoneMissions.create({onActive(active){menu.hidden=active;menu.inert=active;},onFinish(answer){runtime.receive(null);result.textContent=Tasks.title(selected)+(answer.ok?' · Complete!':' · Practice ended.');}});
+ runtime.setConnected(true);
+ for(const id of Tasks.ids()){
+  const button=document.createElement('button'),title=document.createElement('strong'),hint=document.createElement('small');
+  title.textContent=Tasks.title(id);hint.textContent=PhoneTaskControls.getProfile(id).hint;button.append(title,hint);
+  button.onclick=()=>{selected=id;runtime.receive({id,runId:'practice-'+Date.now(),world:['a11','s3','a14s','a15','a16','a17'].includes(id)?'moon':'mars',paused:false});};document.getElementById('choices').appendChild(button);
+ }
+})();
+</script></body></html>

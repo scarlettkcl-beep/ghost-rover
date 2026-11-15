@@ -9,6 +9,8 @@ const Icons = (() => {
     star: '<path d="m16 3 4 8 9 1-6.5 6.5L24 28l-8-4.5L8 28l1.5-9.5L3 12l9-1z"/>',
     clock: '<circle cx="16" cy="18" r="12"/><path class="icon-ink" d="M16 11v8l5 3M12 2h8m-4 0v4m9 1 2-2"/>',
     pause: '<rect x="7" y="5" width="6" height="22" rx="2"/><rect x="19" y="5" width="6" height="22" rx="2"/>',
+    center: '<circle cx="16" cy="16" r="8"/><path class="icon-ink" d="M16 2v7m0 14v7M2 16h7m14 0h7"/>',
+    back: '<path d="m14 6-10 10 10 10V20h14v-8H14z"/>',
     play: '<path d="M9 5v22l19-11z"/>',
     book: '<path d="M5 5h18a4 4 0 0 1 4 4v19H8a4 4 0 0 1-4-4V8a3 3 0 0 1 3-3z"/><path class="icon-ink" d="M10 5v18M5 23h22"/><path class="icon-cutout" d="m19 10 1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5-2.5-2.5 3.5-.5z"/>',
     sound: '<path d="M3 12h6l8-7v22l-8-7H3z"/><path class="icon-ink" d="M22 11q5 5 0 10m4-14q9 9 0 18"/>',

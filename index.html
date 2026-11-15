@@ -333,6 +333,10 @@ button.stk.no .patch-status.ready{background:#fff0c3;color:#76510c}
 @media(max-width:1000px){#hud{display:flex;flex-wrap:nowrap;gap:6px;max-width:calc(100vw - 20px)}#hudTime{order:0}#hud .discoveries{order:1}#hud .science{order:2}#hudWorld{order:3}#compass{max-width:calc(100vw - 180px)}#compass .nav-copy{max-width:230px}#compassTarget{font-size:14px}#compass .lbl{max-width:none}#hudTime.free-explore b{font-size:15px}}
 @media(max-width:720px){.book-header{padding:15px 18px 12px}.book-pages{padding:0 18px 20px}#book .book-title-row h2{font-size:25px}.book-title-row{gap:10px;flex-wrap:wrap}.book-title-row .btn{font-size:14px}#bookNav{gap:6px}.book-jump{font-size:12px;padding:5px 8px}.book-jump .section-count{font-size:11px}#card .art{position:static}#card .actions{bottom:-18px}}
 @media(max-width:480px){#hud{flex-wrap:wrap}#hudTime.free-explore b{font-size:13px}#compass .nav-copy{max-width:calc(100vw - 188px)}#compassTarget{font-size:12px}#compass .lbl{font-size:11px}#compass #signal{display:block;font-size:10px}#compass .dial{width:40px;height:40px}#card .actions .btn{font-size:15px;padding:9px 12px}}
+.phone-pairing{flex-basis:100%;border:2px solid #59d8ff;border-radius:18px;padding:14px;background:#111936;text-align:left;font-size:15px}.phone-pairing[hidden]{display:none}.phone-pairing p{margin:0 0 8px;line-height:1.35}.phone-pairing a{color:#a5e9ff;overflow-wrap:anywhere;user-select:text}.phone-pair-code{display:block;font-size:32px;letter-spacing:5px;color:#ffd23f;margin:6px 0}.phone-pairing .btn{font-size:14px;padding:7px 12px;margin-top:8px}
+.phone-pairing{position:relative;min-height:210px;padding-right:210px}.phone-qr{position:absolute;right:14px;top:14px;width:176px;border:8px solid #fff;border-radius:10px;background:#fff}.phone-qr svg{display:block;width:100%;height:auto;shape-rendering:crispEdges}.phone-qr[hidden]{display:none}@media(max-width:640px){.phone-pairing{padding-right:14px}.phone-qr{position:static;margin:12px auto 0}}
+#task.remote-phone-task .taskstage,#task.remote-phone-task .taskbar,#task.remote-phone-task #taskProgressText,#task.remote-phone-task #taskAssist{display:none}
+#task.remote-phone-task .taskbox{max-width:580px;text-align:center}#task.remote-phone-task .taskhead{align-items:center}#task.remote-phone-task #taskHint{font-size:21px;color:#a8ebff}#task.remote-phone-task #taskAction{padding:20px;background:#121c40;border:2px solid #5269ab;border-radius:18px}
 </style>
 </head>
 <body>
@@ -515,7 +519,7 @@ window.showGameError = function (message) {
 (function () {
   const tasks = ["apollo11-land-eagle", "apollo17-fix-fender", "spirit-broken-wheel", "ingenuity-first-flight", "surveyor3-soft-landing", "apollo14-laser-mirror", "apollo15-unfold-rover",
     "apollo16-grand-prix", "viking1-feed-lab", "viking2-focus-camera", "sojourner-roll-out", "opportunity-catch-wind", "phoenix-dig-ice", "insight-seismometer"]; // one file per mission task
-  const files = ["lib/three.min.js", "js/models.js", "js/audio.js", "js/preferences.js", "js/progress.js", "js/icons.js", "js/discovery-fx.js", "js/ui.js", "js/gamepad.js", "js/prompts.js", "js/minigames/core.js"].concat(tasks.map(t => "js/minigames/" + t + ".js"), ["js/host.js"]);
+  const files = ["lib/three.min.js", "js/models.js", "js/audio.js", "js/preferences.js", "js/progress.js", "lib/qrcode.js", "js/phone-link.js", "js/icons.js", "js/discovery-fx.js", "js/ui.js", "js/gamepad.js", "js/prompts.js", "js/minigames/core.js"].concat(tasks.map(t => "js/minigames/" + t + ".js"), ["js/host.js"]);
   (function next() {
     if (!files.length) {
       try { startHost(); }

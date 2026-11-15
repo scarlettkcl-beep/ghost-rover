@@ -1,0 +1,64 @@
+/* Landscape mission cockpit: keep the scene clear and put each thumb in charge. */
+.phone-mission-active:not(.phone-menu-active) #phoneHeader,.phone-mission-active:not(.phone-menu-active) #controllerDeck,.phone-mission-active:not(.phone-menu-active) #setup,.phone-mission-active:not(.phone-menu-active) #turn{display:none!important}
+#hostView:empty{display:none}
+#task.phone-mission{position:fixed;inset:0;z-index:30;background:#101a35;color:#fff;padding:max(6px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));overflow:auto;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#hostView #task.hidden{display:none!important}
+.phone-mission .taskbox{position:relative;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:48px minmax(0,1fr) auto 6px;gap:6px;width:100%;height:100%;min-height:270px;padding:0;border:0;background:none;max-width:none}
+.phone-mission .taskhead{grid-row:1;display:flex;align-items:center;gap:8px;min-width:0}
+.phone-mission .taskhead>div{flex:1;min-width:0}
+.phone-mission #taskKicker,.phone-mission #taskHint,.phone-mission #taskKeys{display:none}
+.phone-mission #taskTitle{font-size:21px;line-height:1.08;margin:0;color:#ffd23f}
+.phone-mission #taskAction{font-size:12px!important;line-height:1.2;margin:4px 0 0!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone-mission #taskSkip,.phone-mission #phoneMissionPause{flex:none;min-width:64px;min-height:48px;max-height:none;height:48px;padding:10px 12px;border:2px solid #526b97;border-radius:15px;background:#243759;font:inherit;font-size:12px;box-shadow:0 2px 0 #070e21;text-align:center;color:#e1eaff;touch-action:manipulation}
+.phone-mission #taskSkip{background:#182641;color:#bdcce5;border-color:#364f78}
+.phone-mission .taskstage{grid-row:2;min-height:0;min-width:0;position:relative;display:flex;align-items:center;justify-content:center;background:#070d1c;border:2px solid #425f8b;border-radius:18px;overflow:hidden}
+.phone-mission #taskCv{display:block;width:100%;height:100%;object-fit:contain;touch-action:none}
+.phone-mission #taskStamp{display:none;position:absolute;inset:0;align-items:center;justify-content:center;background:#101a35b8;text-align:center;color:#bfffcf;font-size:24px;font-weight:700;padding:15px}
+.phone-mission #taskStamp.show{display:flex}
+.phone-mission #phoneMissionControls{grid-row:3;min-width:0;min-height:0}
+.phone-mission .taskstage+div{position:absolute;right:12px;top:61px;z-index:1;pointer-events:none;background:#101a35d9;padding:5px 8px;border-radius:8px;margin:0!important;font-size:10px!important;color:#d7e9ff}
+.phone-mission .taskbar{grid-row:4;height:6px;background:#283959;border:0;border-radius:6px;overflow:hidden;margin:0!important}
+.phone-mission #taskFill{display:block;height:100%;background:#64e296;border-radius:6px;transition:width .1s}
+#phoneMissionBlocker{position:absolute;inset:0;z-index:8;background:#101a35f2;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;text-align:center;padding:25px;border:2px solid #5f7da8;border-radius:20px}
+#phoneMissionBlocker[hidden]{display:none!important}#phoneMissionBlocker p{font-size:22px;max-width:470px;margin:0}#phoneMissionBlocker button{min-height:48px;min-width:160px;text-align:center;background:#64e296;color:#16392d;border:2px solid #a4ebbe;border-radius:14px;font:inherit;padding:12px 20px}
+.phone-task-deck{display:grid;grid-template-columns:minmax(180px,28%) minmax(0,1fr) minmax(150px,23%);align-items:center;gap:16px;min-height:88px;padding:3px 2px 5px}
+.phone-task-position{grid-column:1;grid-row:1;min-width:0;background:#1e3357;border:2px solid #436b9a;border-radius:18px;padding:6px 12px 3px;box-shadow:0 3px 0 #070e21}
+.phone-task-hint{grid-column:2;grid-row:1;font-size:12px;line-height:1.3;color:#b6c9e5;margin:0;max-width:380px;justify-self:center}
+.phone-task-slider-label{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:#a4ecff}
+.phone-task-icon{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;pointer-events:none}
+.phone-task-icon svg{width:100%;height:100%;display:block}
+.phone-task-slider{display:block;width:100%;min-width:0;min-height:48px;height:48px;margin:0;padding:0;letter-spacing:normal;accent-color:#59d8ff;touch-action:none;cursor:pointer;appearance:none;-webkit-appearance:none;background:transparent}
+.phone-task-slider::-webkit-slider-runnable-track{height:12px;background:#101e36;border:1px solid #6c8eb8;border-radius:8px}
+.phone-task-slider::-webkit-slider-thumb{appearance:none;-webkit-appearance:none;width:32px;height:32px;margin-top:-11px;background:#6de5ff;border:3px solid #d0f8ff;border-radius:50%;box-shadow:0 3px 0 #237197,0 0 0 5px #59d8ff20}
+.phone-task-slider::-moz-range-track{height:10px;background:#101e36;border:1px solid #6c8eb8;border-radius:8px}
+.phone-task-slider::-moz-range-thumb{width:26px;height:26px;background:#6de5ff;border:3px solid #d0f8ff;border-radius:50%;box-shadow:0 3px 0 #237197}
+.phone-task-slider:active::-webkit-slider-thumb{background:#fff;box-shadow:0 0 0 7px #59d8ff30}
+.phone-task-endpoints{display:flex;justify-content:space-between;gap:5px;color:#a8bddb;font-size:10px;line-height:1;margin-top:-3px;padding-bottom:2px}
+.phone-task-action{grid-column:3;grid-row:1;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 8px;width:100%;min-height:80px;background:#ffd23f;color:#332d19;border:2px solid #ffeaa1;border-radius:22px;padding:10px;font:inherit;font-size:17px;line-height:1.1;box-shadow:0 5px 0 #856119;touch-action:none;text-align:center;transition:background .08s,transform .08s,box-shadow .08s}
+.phone-task-action .phone-task-icon{width:28px;height:28px}
+.phone-task-action-name{max-width:calc(100% - 40px)}
+.phone-task-action-cue{flex-basis:100%;font-size:10px;font-weight:700;letter-spacing:1.3px;opacity:.75}
+.phone-task-action.held{background:#64e296;border-color:#c5ffdb;box-shadow:0 1px 0 #164d3a,0 0 0 4px #64e29630;transform:translateY(4px)}
+.phone-task-deck[data-mode="slider"]{grid-template-columns:minmax(220px,46%) minmax(0,1fr)}
+.phone-task-deck[data-mode="hold"]{grid-template-columns:minmax(0,1fr) minmax(160px,28%)}
+.phone-task-deck[data-mode="hold"] .phone-task-hint{grid-column:1;justify-self:start;max-width:430px;font-size:14px}
+.phone-task-deck[data-mode="hold"] .phone-task-action{grid-column:2}
+.phone-mission button:focus-visible,.phone-task-slider:focus-visible{outline:3px solid #6de5ff;outline-offset:3px}
+@media(max-height:360px){.phone-mission .taskbox{gap:4px}.phone-mission #taskTitle{font-size:18px}.phone-mission #taskAction{font-size:11px!important}.phone-task-deck{gap:12px;min-height:80px}.phone-task-position{padding:3px 10px}.phone-task-hint{font-size:11px}.phone-task-action{min-height:76px;font-size:15px}.phone-task-icon{width:20px;height:20px}.phone-task-slider-label{font-size:11px}}
+@media(max-width:700px){.phone-task-deck{grid-template-columns:minmax(160px,32%) minmax(0,1fr) minmax(136px,24%);gap:10px}.phone-task-hint{font-size:11px}.phone-mission #taskTitle{font-size:18px}}
+@media(orientation:portrait){.phone-mission .taskbox{min-height:0}#phoneMissionBlocker p{font-size:24px}.phone-task-deck{visibility:hidden}}
+
+/* Shared pocket-cockpit finish. */
+#task.phone-mission{background:radial-gradient(ellipse at 50% -40%,#304d71,transparent 75%),#101b30}
+.phone-mission #taskTitle{color:#fff0b9;text-shadow:0 2px 0 #071426;letter-spacing:-.3px}
+.phone-mission #taskAction{color:#b8cee3}
+.phone-mission .taskstage{border-color:#587da1;box-shadow:inset 0 0 0 3px #0b152b,0 3px 0 #071225;background:radial-gradient(ellipse,#192b48,#0a1426)}
+.phone-mission #taskSkip,.phone-mission #phoneMissionPause{background:#263c58;border-color:#4c6c8c;box-shadow:inset 0 1px 0 #fff1,0 3px 0 #091329}
+.phone-mission #taskSkip{background:#172940;border-color:#354d6b;color:#a9bed7}
+.phone-task-position{background:linear-gradient(145deg,#294665,#203652);border-color:#5a89a8;box-shadow:inset 0 2px 0 #c5f7ff16,0 4px 0 #081426}
+.phone-task-action{background:linear-gradient(#ffe380,#ffd24b);border-color:#fff0b5;border-bottom-color:#d6a238;box-shadow:inset 0 2px 0 #fff5d366,0 5px 0 #785728}
+.phone-task-hint{padding-left:12px;border-left:2px solid #4e79994d;color:#b5cbe1}
+.phone-task-action.held{background:linear-gradient(#97edb5,#66dba2);box-shadow:0 1px 0 #24523b,0 0 0 4px #64e29625}
+.phone-mission .taskbar{background:#0a1427;box-shadow:inset 0 1px 0 #0005}
+.phone-mission #taskFill{background:linear-gradient(90deg,#53c9e0,#8af0bc);box-shadow:0 0 9px #64e29666}
+#phoneMissionBlocker{background:radial-gradient(ellipse at top,#2b486b,#101e34 85%);border-color:#6b90b4;color:#fff0c4}

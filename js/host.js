@@ -673,6 +673,8 @@ function startHost() {
   function clearHeldInput() {
     for (const k in keys) delete keys[k];
     kbSteer = 0; rover.steer = 0; taskPulse = 0; pad = null;
+    if (typeof phoneState !== "undefined") phoneState = null;
+    if (typeof phoneLink !== "undefined" && phoneLink) phoneLink.clear();
     if (Tasks.inp) Object.assign(Tasks.inp, { hold: false, press: false, mouseHold: false, x: 0 });
   }
   function pauseForFocusLoss() {
@@ -682,9 +684,22 @@ function startHost() {
   addEventListener("blur", pauseForFocusLoss);
   document.addEventListener("visibilitychange", () => { if (document.hidden) pauseForFocusLoss(); });
   addEventListener("pointerdown", () => Sfx.init());
-  // Keyboard and game controller are both read every frame. Whichever one is being used wins:
-  // the strongest steering and the hardest pedal press count, so nobody has to switch anything.
+  // All connected inputs remain usable: strongest steering and pedal presses win.
   let pad = null, ctrlNow = "kb", kbSteer = 0;
+  let phoneState = null, phoneMission = null;
+  const phoneLink = typeof PhoneLink === "undefined" ? null : PhoneLink.createHost({ onDisconnect: phoneDisconnected });
+  function phoneDisconnected(message) {
+    phoneState = null;
+    if (phoneMission) {
+      const originalHint = phoneMission.desktopHint;
+      phoneMission = null; phoneLink.clearMission();
+      if (typeof originalHint === "string") $("taskHint").textContent = originalHint;
+      const task = document.getElementById("task"); if (task) task.classList.remove("remote-phone-task");
+      lostInput("Phone disconnected. Resume to restart this mission task on the computer.");
+      return;
+    }
+    if (ctrlNow === "phone") lostInput(message || "The phone disconnected. Reconnect it, or keep going with the keyboard or a controller.");
+  }
   function updateKb(dt) { // keyboard steering eases in over about a third of a second, so it isn't twitchy, and lets go quickly
     const t = (keys.arrowleft || keys.a ? -1 : 0) + (keys.arrowright || keys.d ? 1 : 0);
     const rate = t !== 0 && (kbSteer === 0 || Math.sign(t) === Math.sign(kbSteer)) && Math.abs(t) > Math.abs(kbSteer) ? 3.2 : 8;
@@ -698,8 +713,13 @@ function startHost() {
     if (!Tasks.has(st.id)) { openCard(st, replay ? "review" : "site"); return; }
     if (!replay) { pendingSite = st.id; pendingPhase = "task"; }
     mode = "task"; taskSite = st; rover.v = 0; $("toast").classList.remove("show"); toastT = 0; Tasks.has(st.id) && setTimeout(refreshPrompts, 0);
+    if (phoneMission && phoneLink) phoneLink.clearMission();
+    phoneMission = null;
     Tasks.start(st.id, { world: taskWorld, sfx: n => (taskSfx[n] || (() => { }))(), buzz: k => Pad.rumble(k),
       onEnd: ok => {
+        if (phoneMission && phoneLink) phoneLink.clearMission();
+        phoneMission = null;
+        const task = document.getElementById("task"); if (task) task.classList.remove("remote-phone-task");
         taskSite = null;
         if (ok) {
           const first = !tasksDone.has(st.id); tasksDone.add(st.id);
@@ -714,31 +734,46 @@ function startHost() {
         saveProgress();
         openCard(st, replay ? "review" : "site");
       } });
-   
+    const readyPhone = phoneLink && phoneLink.sample();
+    if (readyPhone && readyPhone.taskReady && typeof phoneLink.setMission === "function") {
+      phoneMission = { id: st.id, world: taskWorld, desktopHint: $("taskHint").textContent, runId: st.id + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2), paused: false };
+      phoneLink.setMission(phoneMission); setCtrl("phone");
+      const task = document.getElementById("task"); if (task) task.classList.add("remote-phone-task");
+      $("taskHint").textContent = "This mission is running on your phone. Follow its touch controls to complete it.";
+      $("taskAction").textContent = "Pick up your phone · your rover and mission timer are waiting here.";
+    }
   }
   function stepTask(dt) { // the task uses the same controls as driving: steer moves the pointer, drive (or Enter, or Cross) grabs
+    if (typeof phoneMission !== "undefined" && phoneMission) {
+      const result = phoneState && phoneState.missionResult;
+      if (result && result.runId === phoneMission.runId) {
+        phoneMission = null; phoneLink.ackMission(result.runId); Tasks.finish(result.ok);
+      }
+      return;
+    }
     const i = input(); taskPulse -= dt;
-    Tasks.step(dt, { x: i.s, hold: i.g > 0 || keys.enter || keys[" "] || (pad && pad.down.cross) || taskPulse > 0 });
+    Tasks.step(dt, { x: i.s, hold: i.g > 0 || keys.enter || keys[" "] || (pad && pad.down.cross) || (phoneState && phoneState.down.cross) || taskPulse > 0 });
   }
 
   // ---- button prompts follow the active input ----
   function setCtrl(kind) { if (kind !== ctrlNow) { ctrlNow = kind; refreshPrompts(); } }
   function refreshPrompts() {
-    const k = ctrlNow, P = Prompts, key = P.key, set = (id, act) => { const el = $(id); if (el) el.dataset.key = act ? P.label(k, act) : ""; };
+    const k = ctrlNow, style = k === "phone" ? "pad" : k, P = Prompts, key = P.key, set = (id, act) => { const el = $(id); if (el) el.dataset.key = act ? P.label(k, act) : ""; };
     document.querySelectorAll(".way").forEach(w => w.classList.toggle("on", w.dataset.way === k));
     set("cardNext", "next"); set("cardRead", "read"); set("reportKeep", "next"); set("kbStart", "next"); set("howClose", "next"); set("pauseResume", "next");
     set("bookClose", "back"); set("taskSkip", "skip");
     const cardAction = cardKind === "review" ? "Back to sticker book" : cardKind === "deep" ? "Next signal" : cardKind === "end" ? "Back to title" : cardKind === "world" ? "Next destination" : "Keep exploring";
     const html = {
       card: { pad: P.line(k, [["next", cardAction], ["read", "Read aloud"], ["back", "Close"]]), kb: P.line(k, [["next", cardAction], ["read", "Read aloud"], ["back", "Close"]]) },
-      task: { pad: key("Left stick") + " move the hand · hold " + key("✕") + " to grab · " + key("○") + " skip", kb: key("←") + " " + key("→") + " move the hand · hold " + key("Enter") + " to grab · " + key("Esc") + " skip" },
-      report: { pad: P.line(k, [["next", "Keep exploring"]]) + " · " + key("D-pad") + " choose a button", kb: P.line(k, [["next", "Keep exploring"]]) + " · " + key("←") + " " + key("→") + " choose a button" },
-      book: { pad: key("○") + " or " + key("□") + " close", kb: key("Esc") + " or " + key("B") + " close" },
-      pause: { pad: key("✕") + " or " + key("○") + " resume · " + key("D-pad") + " choose", kb: key("Enter") + " or " + key("Esc") + " resume · " + key("←") + " " + key("→") + " choose" }
+      task: { pad: key(k === "phone" ? "Tilt phone" : "Left stick") + " move the hand · hold " + key(P.label(k, "next")) + " to grab · " + key(P.label(k, "back")) + " skip", kb: key("←") + " " + key("→") + " move the hand · hold " + key("Enter") + " to grab · " + key("Esc") + " skip" },
+      report: { pad: P.line(k, [["next", "Keep exploring"]]) + " · " + key(k === "phone" ? "Arrow buttons" : "D-pad") + " choose a button", kb: P.line(k, [["next", "Keep exploring"]]) + " · " + key("←") + " " + key("→") + " choose a button" },
+      book: { pad: key(P.label(k, "back")) + " or " + key(P.label(k, "book")) + " close", kb: key("Esc") + " or " + key("B") + " close" },
+      pause: { pad: key(P.label(k, "next")) + " or " + key(P.label(k, "back")) + " resume · " + key(k === "phone" ? "Arrow buttons" : "D-pad") + " choose", kb: key("Enter") + " or " + key("Esc") + " resume · " + key("←") + " " + key("→") + " choose" }
     };
-    $("cardKeys").innerHTML = html.card[k]; $("reportKeys").innerHTML = html.report[k]; $("bookKeys").innerHTML = html.book[k]; $("pauseKeys").innerHTML = html.pause[k];
+    $("cardKeys").innerHTML = html.card[style]; $("reportKeys").innerHTML = html.report[style]; $("bookKeys").innerHTML = html.book[style]; $("pauseKeys").innerHTML = html.pause[style];
     const tk = document.getElementById("taskKeys");
-    if (tk) tk.innerHTML = Tasks.steerOnly() ? (k === "pad" ? key("Left stick") : key("←") + " " + key("→")) + " adjust · " + key(k === "pad" ? "○" : "Esc") + " skip" : html.task[k];
+    if (tk) tk.innerHTML = Tasks.steerOnly() ? (style === "pad" ? key(k === "phone" ? "Tilt phone" : "Left stick") : key("←") + " " + key("→")) + " adjust · " + key(style === "pad" ? P.label(k, "skip") : "Esc") + " skip" : html.task[style];
+    if (typeof phoneMission !== "undefined" && phoneMission && tk) tk.textContent = "Use the touch controls on your phone · Pause to take a break";
   }
   function input() {
     let s = kbSteer, g = keys.arrowup || keys.w ? 1 : 0, r = keys.arrowdown || keys.s ? 1 : 0;
@@ -746,6 +781,10 @@ function startHost() {
     if (pad) {
       if (pad.steer || pad.gas || pad.brake) setCtrl("pad");
       if (Math.abs(pad.steer) > Math.abs(s)) s = pad.steer; g = Math.max(g, pad.gas); r = Math.max(r, pad.brake);
+    }
+    if (phoneState) {
+      if (phoneState.steer || phoneState.gas || phoneState.brake) setCtrl("phone");
+      if (Math.abs(phoneState.steer) > Math.abs(s)) s = phoneState.steer; g = Math.max(g, phoneState.gas); r = Math.max(r, phoneState.brake);
     }
     return { s, g, r };
   }
@@ -775,6 +814,54 @@ function startHost() {
       else if (b === "right" || b === "down") moveFocus(1);
     }
   }
+  // The phone follows the current game surface. Menus use explicit arrow
+  // buttons; tilting the device never moves menu focus or selects an item.
+  function phoneSelectedButton(overlay, screen) {
+    const focused = document.activeElement;
+    if (overlay && focused && overlay.contains(focused) && focused.tagName === "BUTTON" && GameUI.visible(focused)) return focused;
+    const defaults = { lobby: GameUI.visible($("continueBtn")) ? "continueBtn" : "kbStart", story: "cardNext", book: "bookClose", pause: "pauseResume", report: "reportKeep", howto: "howClose", confirm: "newGameCancel" };
+    const button = defaults[screen] ? $(defaults[screen]) : null;
+    return GameUI.visible(button) ? button : null;
+  }
+  function phoneContext() {
+    const overlay = overlayNow(), screens = { lobby: "lobby", card: "story", book: "book", pause: "pause", report: "report", howto: "howto", newGameConfirm: "confirm", graphicsRecovery: "recovery", task: "task" };
+    const screen = graphicsBlocked ? "recovery" : overlay ? screens[overlay.id] || (mode === "task" ? "task" : "lobby") : mode === "play" ? "drive" : mode === "count" ? "count" : "lobby";
+    const titles = { drive: "Explore with your rover", lobby: "Choose your mission", story: "Mission story", book: "Sticker book", pause: "Game paused", report: "Mission report", howto: "How to play", confirm: "Start a new game?", recovery: "Game needs attention", task: "Mission task", count: "Get ready!" };
+    const defaults = { lobby: "Start exploring", story: "Continue", book: "Close book", pause: "Resume", report: "Keep exploring", howto: "Got it", confirm: "Keep my progress", recovery: "Select", task: "Mission on phone", count: "Starting soon", drive: "Explore" };
+    const chosen = phoneSelectedButton(overlay, screen);
+    const planet = chosen && chosen.dataset && chosen.dataset.world;
+    const selection = chosen && ((chosen.getAttribute && chosen.getAttribute("aria-label")) || (planet === "moon" ? "Choose Moon" : planet === "mars" ? "Choose Mars" : chosen.innerText || chosen.textContent));
+    if (screen === "story" && $("cardNext").disabled) defaults.story = "Please wait…";
+    const title = screen === "story" ? $("cardName").textContent || titles[screen] : screen === "task" ? $("taskTitle").textContent || titles[screen] : titles[screen];
+    return { screen, title: title.slice(0, 96), selection: (selection || defaults[screen]).replace(/\s+/g, " ").trim().slice(0, 96),
+      canRead: screen === "story" && !$("cardRead").disabled, canBook: screen === "drive" || screen === "book",
+      canBack: ["book", "pause", "howto", "confirm"].includes(screen) || screen === "story" && !$("cardNext").disabled };
+  }
+  function publishPhoneContext() {
+    if (phoneLink && typeof phoneLink.setContext === "function") phoneLink.setContext(phoneContext());
+  }
+  function pollPhone(now) {
+    phoneState = phoneLink ? phoneLink.sample() : null;
+    if (!phoneState) { publishPhoneContext(); return; }
+    const state = phoneState;
+    const menu = !!overlayNow() && (mode !== "task" || graphicsBlocked);
+    if (menu) { phoneState = { ...state, steer: 0, gas: 0, brake: 0 }; }
+    for (const b of state.pressed) {
+      // A paused remote task still exposes the computer's pause menu.
+      if (phoneMission && mode === "task" && !graphicsBlocked && b !== "options") continue;
+      Sfx.init(); setCtrl("phone");
+      if (b === "left" || b === "up" || b === "right" || b === "down") {
+        if (!!overlayNow() && (mode !== "task" || graphicsBlocked)) moveFocus(b === "left" || b === "up" ? -1 : 1);
+      } else if (b === "cross") {
+        const selected = phoneSelectedButton(overlayNow(), phoneContext().screen);
+        if (selected) selected.click(); else action("next");
+      } else if (b === "circle") { action("back"); clearFocus(); }
+      else if (b === "triangle") action("read");
+      else if (b === "square") action("book");
+      else if (b === "options") action("pause");
+    }
+    publishPhoneContext();
+  }
   addEventListener("gamepadconnected", () => {
     toast("Controller connected!", "Ready to drive", "🎮"); setCtrl("pad"); setTimeout(() => Pad.rumble("hello"), 120);
     $("padStatus").innerHTML = 'Connected! Press <i class="ps x">✕</i>'; if (Pad.lights.supported) $("lightsBtn").classList.remove("hidden");
@@ -793,12 +880,15 @@ function startHost() {
     if (mode === "count") { mode = "play"; $("count").innerHTML = ""; $("intro").classList.remove("show"); countN = -1; }
     if (mode !== "play" && mode !== "task") return;
     pausePrev = mode; mode = "pause"; rover.v = 0; clearHeldInput(); clearFocus();
+    if (phoneMission) { phoneMission.paused = true; phoneLink.setMission(phoneMission); }
     $("pauseMsg").textContent = msg || ""; $("pauseMsg").classList.toggle("hidden", !msg);
     $("pauseWorld").classList.toggle("hidden", pausePrev !== "play"); $("pauseTitle").classList.toggle("hidden", pausePrev !== "play");
     Icons.label($("pauseWorld"), "rocket", worldKey === "moon" ? "Go to Mars" : "Go to the Moon"); paintSound();
     $("pause").classList.remove("hidden"); showClock();
   }
-  function resume() { clearHeldInput(); $("pause").classList.add("hidden"); clearFocus(); mode = pausePrev; showClock(); }
+  function resume() { clearHeldInput(); $("pause").classList.add("hidden"); clearFocus(); mode = pausePrev;
+    if (phoneMission) { phoneMission.paused = false; phoneLink.setMission(phoneMission); }
+    showClock(); }
   function paintSound() {
     const icon = Sfx.muted ? "soundOff" : "sound";
     Icons.label($("pauseSound"), icon, Sfx.muted ? "Sound: Off" : "Sound: On");
@@ -1664,6 +1754,7 @@ function startHost() {
       if (lost) {
         if (event) event.preventDefault(); lostContexts.add(canvas); graphicsBlocked = true;
         clearHeldInput(); stopReading(); Sfx.engine(0, false); saveProgress();
+        if (typeof phoneMission !== "undefined" && phoneMission) { phoneMission.paused = true; phoneLink.setMission(phoneMission); }
         overlay.classList.remove("hidden");
       } else lostContexts.delete(canvas);
       $("graphicsResume").disabled = lostContexts.size > 0;
@@ -1677,6 +1768,7 @@ function startHost() {
     $("graphicsResume").onclick = () => {
       if (lostContexts.size) return;
       clearHeldInput(); clearFocus(); graphicsBlocked = false; overlay.classList.add("hidden");
+      if (typeof phoneMission !== "undefined" && phoneMission) { phoneMission.paused = mode !== "task"; phoneLink.setMission(phoneMission); }
     };
     $("graphicsReload").onclick = () => { saveProgress(); location.reload(); };
   }
@@ -1691,7 +1783,7 @@ function startHost() {
   const hintObserver = new MutationObserver(() => {
     if (mode !== "play" || driveHintShown) return;
     driveHintShown = true; store.set("driveHint", "1");
-    toast(ctrlNow === "pad" ? "R2 drives, L2 reverses, and the left stick steers. Follow the glowing beams!" : "Hold ↑ or W to drive; ← → or A D steer. Follow the glowing beams!", "Ready, explorer?", "💡");
+    toast(ctrlNow === "phone" ? "Tilt your phone to steer. Hold Drive to go forward or Reverse to back up." : ctrlNow === "pad" ? "R2 drives, L2 reverses, and the left stick steers. Follow the glowing beams!" : "Hold ↑ or W to drive; ← → or A D steer. Follow the glowing beams!", "Ready, explorer?", "💡");
     hintObserver.disconnect();
   });
   hintObserver.observe($("count"), { childList: true });
@@ -1705,8 +1797,8 @@ function startHost() {
   function frame(now) {
     const raw = (now - last) / 1000, dt = Math.min(.05, raw); last = now;
     discoveryFx.guard(mode, graphicsBlocked);
-    if (graphicsBlocked) { pollPad(); requestAnimationFrame(frame); return; }
-    updateKb(Math.min(.05, raw)); pollPad(); tickCardWait();
+    if (graphicsBlocked) { pollPad(); pollPhone(now); requestAnimationFrame(frame); return; }
+    updateKb(Math.min(.05, raw)); pollPad(); pollPhone(now); tickCardWait();
     if (Tasks.active() && mode === "task") stepTask(Math.min(.05, raw));
     update(dt);
     if (Math.abs(rover.x - tcx) > 120 || Math.abs(rover.y - tcz) > 120) updateTerrain(Math.round(rover.x / 120) * 120, Math.round(rover.y / 120) * 120);

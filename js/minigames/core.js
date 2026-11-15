@@ -92,9 +92,9 @@ const Tasks = (() => {
     if (typeof Icons !== "undefined") Icons.label(el.querySelector("#taskKicker"), "tool", "Mission task");
     document.getElementById("hostView").appendChild(el);
     const cv = el.querySelector("#taskCv"); cv.width = W * 2; cv.height = H * 2; g = cv.getContext("2d");
-    const at = e => { const r = cv.getBoundingClientRect(), range = cur && cur.d.pointerRange || [0, W]; inp.px = clamp((e.clientX - r.left) / r.width * W, range[0], range[1]); inp.mouse = true; };
+    const at = e => { if (fx.pointerInput === false) return; const r = cv.getBoundingClientRect(), range = cur && cur.d.pointerRange || [0, W]; inp.px = clamp((e.clientX - r.left) / r.width * W, range[0], range[1]); inp.mouse = true; };
     cv.addEventListener("pointermove", at);
-    cv.addEventListener("pointerdown", e => { at(e); inp.mouseHold = true; try { cv.setPointerCapture(e.pointerId); } catch (x) { } e.preventDefault(); });
+    cv.addEventListener("pointerdown", e => { if (fx.pointerInput === false) return; at(e); inp.mouseHold = true; try { cv.setPointerCapture(e.pointerId); } catch (x) { } e.preventDefault(); });
     ["pointerup", "pointercancel"].forEach(n => cv.addEventListener(n, () => inp.mouseHold = false));
     el.querySelector("#taskSkip").onclick = () => skip();
   }
@@ -129,6 +129,8 @@ const Tasks = (() => {
   }
   function end(ok) { const c = cur; cur = null; if (el) el.classList.add("hidden"); if (c && c.onEnd) c.onEnd(ok); }
   function skip() { if (cur) end(cur.doneT >= 0); }
+  function cancel() { cur = null; if (el) el.classList.add("hidden"); Object.assign(inp, { hold: false, press: false, mouseHold: false, x: 0 }); }
+
 
   // one frame. raw = { x: steering -1..1, hold: button held }. Works without a screen too, so tests can run tasks quickly.
   function step(dt, raw, noDraw) {
@@ -155,5 +157,5 @@ const Tasks = (() => {
   }
 
   return { add(id, def) { defs[id] = def; }, has: id => !!defs[id], title: id => defs[id] && defs[id].title, ids: () => Object.keys(defs),
-    start, step, skip, active: () => !!cur, steerOnly: () => !!(cur && cur.d.steerOnly), state: () => cur && cur.s, elapsed: () => cur ? cur.t : 0, T, inp };
+    start, step, skip, finish: ok => end(!!ok), cancel, currentId: () => cur && cur.id, pointerRange: () => cur && cur.d.pointerRange || [0, W], active: () => !!cur, steerOnly: () => !!(cur && cur.d.steerOnly), state: () => cur && cur.s, elapsed: () => cur ? cur.t : 0, T, inp };
 })();

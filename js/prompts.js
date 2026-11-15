@@ -8,6 +8,7 @@
 const Prompts = (() => {
   const K = {
     pad: { name: "🎮 controller", next: "✕", back: "○", read: "△", book: "□", pause: "OPTIONS", world: "OPTIONS", steer: "left stick", drive: "R2", brake: "L2", grab: "hold ✕", skip: "○", move: "D-pad" },
+    phone: { name: "phone controller", next: "Select", back: "Back", read: "Read", book: "Book", pause: "Pause", world: "Pause", steer: "tilt phone", drive: "Drive", brake: "Reverse", grab: "hold Select", skip: "Back", move: "tilt phone" },
     kb: { name: "⌨️ keyboard", next: "Enter", back: "Esc", read: "R", book: "B", pause: "P", world: "M", steer: "← →", drive: "↑", brake: "↓", grab: "hold Enter", skip: "Esc", move: "← →" }
   };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
